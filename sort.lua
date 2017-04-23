@@ -1,20 +1,20 @@
-local function medianOf3(t, low, high)
+local function medianOf3(t, low, high, comp)
 	
 	local middle = math.floor( ( low + high ) / 2 )
 	
-	if t[middle] < t[low] then
+	if comp(t[middle], t[low]) then
 		
 		t[middle], t[low] = t[low], t[middle]
 		
 	end
 	
-	if t[high] < t[low] then
+	if comp(t[high], t[low]) then
 		
 		t[high], t[low] = t[low], t[high]
 		
 	end
 	
-	if t[high] < t[middle] then
+	if comp(t[high], t[middle]) then
 		
 		t[high], t[middle] = t[middle], t[high]
 		
@@ -26,7 +26,7 @@ local function medianOf3(t, low, high)
 	
 end
 
-local function partition(t, low, high, pivot)
+local function partition(t, low, high, pivot, comp)
 	
 	local left = low - 1
 	local right = high + 1
@@ -37,13 +37,13 @@ local function partition(t, low, high, pivot)
 			
 			left = left + 1
 			
-		until t[left] >= pivot or left >= high
+		until (not comp(t[left], pivot)) or left >= high
 		
 		repeat
 			
 			right = right - 1
 			
-		until t[right] <= pivot or right <= low
+		until (not comp(pivot, t[right])) or right <= low
 		
 		if left >= right then
 			
@@ -61,27 +61,7 @@ local function partition(t, low, high, pivot)
 	
 end
 
-local function recQuickSort(t, left, right)
-	
-	local size = right - left + 1
-	
-	if size < 10 then
-		
-		table.insertionsort(t, left, right)
-	
-	else
-		
-		local pivot = medianOf3(t, left, right)
-		local par = partition(t, left, right, pivot)
-		
-		recQuickSort(t, left, par - 1)
-		recQuickSort(t, par, right)
-		
-	end
-	
-end
-
-function table.insertionsort(t, left, right)
+local function insertionSort(t, left, right, comp)
 	
 	local left = left or 1
 	local right = right or #t
@@ -91,7 +71,7 @@ function table.insertionsort(t, left, right)
 		local aux = t[i]
 		local j = i
 		
-		while j > left and t[j - 1] >= aux do
+		while j > left and not comp(t[j - 1], aux) do
 			
 			t[j] = t[j - 1]
 			j = j - 1
@@ -104,8 +84,68 @@ function table.insertionsort(t, left, right)
 	
 end
 
-function table.quicksort(t)
+local function quickSort(t, left, right, comp)
 	
-	recQuickSort(t, 1, #t)
+	local size = right - left + 1
+	
+	if size < 10 then
+		
+		insertionSort(t, left, right, comp)
+	
+	else
+		
+		local pivot = medianOf3(t, left, right, comp)
+		local par = partition(t, left, right, pivot, comp)
+		
+		quickSort(t, left, par - 1, comp)
+		quickSort(t, par, right, comp)
+		
+	end
+	
+end
+
+local function selectionSort(t, left, right, comp)
+	
+	for i = left, right do
+		
+		local aux = i
+		
+		for j = i, right do
+			
+			if comp(t[j], t[aux]) then
+				
+				aux = j
+				
+			end
+			
+		end
+		
+		t[i], t[aux] = t[aux], t[i]
+		
+	end
+	
+end
+
+local function compare(a, b)
+	
+	return a < b
+	
+end
+
+function table.insertionsort(t, comp)
+	
+	insertionSort(t, 1, #t, comp or compare)
+	
+end
+
+function table.quicksort(t, comp)
+	
+	quickSort(t, 1, #t, comp or compare)
+	
+end
+
+function table.selectionsort(t, comp)
+	
+	selectionSort(t, 1, #t, comp or compare)
 	
 end
