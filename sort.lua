@@ -149,3 +149,191 @@ function table.selectionsort(t, comp)
 	selectionSort(t, 1, #t, comp or compare)
 	
 end
+
+local hashFunctions = {}
+
+function hashFunctions.number(Number)
+	
+	return Number
+	
+end
+
+function hashFunctions.string(String)
+	
+	local Hash = 0
+	
+	for i = 1, #String do
+		
+		Hash = Hash * 31 + String:byte(i)
+		
+	end
+	
+	return Hash
+	
+end
+
+function table.countingsort(Table, hashFunction)
+	
+	if not hashFunction then
+		
+		local Index, Value = next(Table)
+		
+		if not Value then
+			
+			return nil
+			
+		end
+		
+		hashFunction = hashFunctions[type(Value)]
+		
+	end
+	
+	local Max = Table[1]
+	local Min = Table[1]
+	local Hash = {}
+	local Copy = {}
+	
+	for i = 1, #Table do
+		
+		local Value = Table[i]
+		
+		if not Hash[Value] then
+			
+			Hash[Value] = hashFunction(Value)
+			
+		end
+		
+		Max = math.max(Hash[Value], Max)
+		Min = math.min(Hash[Value], Min)
+		Copy[i] = Value
+		
+	end
+	
+	local CountingArray = {}
+	
+	for i = 1, #Table do
+		
+		local Index = Hash[Table[i]] - Min + 1
+		local Count = CountingArray[Index]
+		
+		if not Count then
+			
+			Count = 0
+			
+		end
+		
+		CountingArray[Index] = Count + 1
+		
+	end
+	
+	local Total = 1
+	
+	for i = 1, Max - Min + 1 do
+		
+		local OldCount = CountingArray[i]
+		
+		if not OldCount then
+			
+			OldCount = 0
+			
+		end
+		
+		CountingArray[i]	= Total
+		Total					= Total + OldCount
+		
+	end
+	
+	for i = 1, #Copy do
+		
+		local Index = Hash[Copy[i]] - Min + 1
+		local TableIndex = CountingArray[Index]
+		
+		Table[TableIndex]		= Copy[i]
+		CountingArray[Index]	= TableIndex + 1
+		
+	end
+	
+end
+
+function table.countingsort2(Table, hashFunction)
+	
+	if not hashFunction then
+		
+		local Index, Value = next(Table)
+		
+		if not Value then
+			
+			return nil
+			
+		end
+		
+		hashFunction = hashFunctions[type(Value)]
+		
+	end
+	
+	local Max = Table[1]
+	local Min = Table[1]
+	local Hash = {}
+	local Copy = {}
+	
+	for i = 1, #Table do
+		
+		local Value = Table[i]
+		
+		if not Hash[Value] then
+			
+			Hash[Value] = hashFunction(Value)
+			
+		end
+		
+		Max = math.max(Hash[Value], Max)
+		Min = math.min(Hash[Value], Min)
+		Copy[i] = Value
+		
+	end
+	
+	local CountingArray = {}
+	
+	for i = 1, #Table do
+		
+		local Index = Hash[Table[i]] - Min + 1
+		local Count = CountingArray[Index]
+		
+		if not Count then
+			
+			Count = 0
+			
+		end
+		
+		CountingArray[Index] = Count + 1
+		
+	end
+	
+	local Total = 1
+	
+	for i = 1, Max - Min + 1 do
+		
+		local OldCount = CountingArray[i]
+		
+		if not OldCount then
+			
+			OldCount = 0
+			
+		end
+		
+		CountingArray[i]	= Total
+		Total					= Total + OldCount
+		
+	end
+	
+	for i = 1, #Copy do
+		
+		local Index = Hash[Copy[i]] - Min + 1
+		local TableIndex = CountingArray[Index]
+		
+		Table[TableIndex]		= Copy[i]
+		CountingArray[Index]	= TableIndex + 1
+		
+	end
+	
+end
