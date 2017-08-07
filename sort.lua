@@ -188,8 +188,8 @@ function table.countingsort(Table, hashFunction)
 		
 	end
 	
-	local Max = Table[1]
-	local Min = Table[1]
+	local Max
+	local Min
 	local Hash = {}
 	local Copy = {}
 	
@@ -203,8 +203,8 @@ function table.countingsort(Table, hashFunction)
 			
 		end
 		
-		Max = math.max(Hash[Value], Max)
-		Min = math.min(Hash[Value], Min)
+		Max = math.max(Hash[Value], Max or Hash[Value])
+		Min = math.min(Hash[Value], Min or Hash[Value])
 		Copy[i] = Value
 		
 	end
@@ -271,8 +271,8 @@ function table.countingsort2(Table, hashFunction)
 		
 	end
 	
-	local Max = Table[1]
-	local Min = Table[1]
+	local Max
+	local Min
 	local Hash = {}
 	local Copy = {}
 	
@@ -286,8 +286,8 @@ function table.countingsort2(Table, hashFunction)
 			
 		end
 		
-		Max = math.max(Hash[Value], Max)
-		Min = math.min(Hash[Value], Min)
+		Max = math.max(Hash[Value], Max or Hash[Value])
+		Min = math.min(Hash[Value], Min or Hash[Value])
 		Copy[i] = Value
 		
 	end
@@ -335,5 +335,114 @@ function table.countingsort2(Table, hashFunction)
 		CountingArray[Index]	= TableIndex + 1
 		
 	end
+	
+end
+
+function table.distributionSort(Table, Start, End, hashFunction, comp)
+	
+	if not hashFunction then
+		
+		local Index, Value = next(Table)
+		
+		if not Value then
+			
+			return nil
+			
+		end
+		
+		hashFunction = hashFunctions[type(Value)]
+		
+	end
+	
+	local Start = Start or 1
+	local End = End or #Table
+	
+	local Max
+	local Min
+	local Hash = {}
+	
+	for i = Start, End do
+		
+		local Value = Table[i]
+		
+		if not Hash[Value] then
+			
+			Hash[Value] = hashFunction(Value)
+			
+		end
+		
+		Max = math.max(Hash[Value], Max or Hash[Value])
+		Min = math.min(Hash[Value], Min or Hash[Value])
+		
+	end
+	
+	local Distribution = {}
+	local DistributionPos = {}
+	local DistributionCount = {}
+	local DistributionLength = math.ceil( math.sqrt( End - Start + 1 ) )
+	local Factor = DistributionLength / ( Max - Min + 1 )
+	
+	for i = Start, End do
+		
+		local HashIndex = Hash[Table[i]] - Min
+		local Index = math.floor( HashIndex * Factor ) + 1
+		
+		Distribution[ Index ] = ( Distribution[ Index ] or 0 ) + 1
+		
+	end
+	
+	local Accum = Start
+	
+	for i = 1, DistributionLength + 1 do
+		
+		DistributionCount[i] = Distribution[i] or 0
+		DistributionPos[i] = Accum
+		Distribution[i] = Accum
+		
+		Accum = Accum + DistributionCount[i]
+		
+	end
+	
+	for DistributionIndex = 1, DistributionLength do
+		
+		for i = Distribution[DistributionIndex], Distribution[DistributionIndex + 1] - 1 do
+			
+			local HashIndex = Hash[Table[i]] - Min
+			local Index = math.floor( HashIndex * Factor ) + 1
+			
+			while Index ~= DistributionIndex do
+				
+				local AuxIndex = DistributionPos[Index]
+				local Aux = Table[AuxIndex]
+				
+				DistributionPos[Index] = DistributionPos[Index] + 1
+				
+				Table[AuxIndex] = Table[i]
+				Table[i] = Aux
+				
+				HashIndex = Hash[Table[i]] - Min
+				Index = math.floor( HashIndex * Factor ) + 1
+				
+			end
+			
+		end
+		
+		if DistributionCount[DistributionIndex] > 1 then
+			
+			if DistributionCount[DistributionIndex] < 10 then
+				
+				insertionSort(Table, Distribution[DistributionIndex], Distribution[DistributionIndex] + DistributionCount[DistributionIndex] - 1, comp or compare)
+				
+			else
+				
+				table.distributionSort(Table, Distribution[DistributionIndex], Distribution[DistributionIndex] + DistributionCount[DistributionIndex] - 1, hashFunction, comp or compare)
+				
+			end
+			
+		end
+		
+	end
+	
+	return nil
 	
 end
